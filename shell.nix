@@ -44,6 +44,7 @@ let
     awscli
     cacert
     ghcid
+    morph
     niv
     nixpkgs-fmt
     nodejs

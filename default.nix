@@ -64,7 +64,7 @@ rec {
   marlowe-dashboard = pkgs.recurseIntoAttrs rec {
     inherit (pkgs.callPackage ./marlowe-dashboard-client {
       inherit (plutus.lib) buildPursPackage buildNodeModules;
-      inherit set-git-rev haskell webCommon webCommonMarlowe;
+      inherit set-git-rev haskell webCommon;
     }) client server-invoker generated-purescript generate-purescript;
   };
 
