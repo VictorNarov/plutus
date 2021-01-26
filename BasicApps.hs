@@ -1,21 +1,4 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveAnyClass             #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE NamedFieldPuns             #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# OPTIONS_GHC -fno-ignore-interface-pragmas #-}
-module BasicApps where
-
--- BLOCK0
-
+import Playground.Contract
 import           Control.Monad             (void)
 import           Data.Aeson                (FromJSON, ToJSON)
 import qualified Data.Text                 as T
@@ -30,8 +13,6 @@ import qualified Ledger.Typed.Scripts      as Scripts
 import           Schema
 import           Wallet.Emulator.Wallet
 
--- BLOCK1
-
 data SplitData =
     SplitData
         { recipient1 :: PubKeyHash -- ^ First recipient of the funds
@@ -43,15 +24,8 @@ data SplitData =
 PlutusTx.makeIsData ''SplitData
 PlutusTx.makeLift ''SplitData
 
--- BLOCK2
-
 validateSplit :: SplitData -> () -> ValidatorCtx -> Bool
-validateSplit SplitData{recipient1, recipient2, amount} _ ValidatorCtx{valCtxTxInfo} =
-    let half = Ada.divide amount 2 in
-    Ada.fromValue (valuePaidTo valCtxTxInfo recipient1) >= half &&
-    Ada.fromValue (valuePaidTo valCtxTxInfo recipient2) >= (amount - half)
-
--- BLOCK3
+validateSplit _ _ _ = True
 
 data Split
 instance Scripts.ScriptType Split where
@@ -63,8 +37,6 @@ splitInstance = Scripts.validator @Split
     $$(PlutusTx.compile [|| validateSplit ||])
     $$(PlutusTx.compile [|| wrap ||]) where
         wrap = Scripts.wrapValidator @SplitData @()
-
--- BLOCK4
 
 data LockArgs =
         LockArgs
@@ -80,15 +52,11 @@ type SplitSchema =
         .\/ Endpoint "lock" LockArgs
         .\/ Endpoint "unlock" LockArgs
 
--- BLOCK5
-
 lock :: Contract SplitSchema T.Text LockArgs
 lock = endpoint @"lock"
 
 unlock :: Contract SplitSchema T.Text LockArgs
 unlock = endpoint @"unlock"
-
--- BLOCK6
 
 mkSplitData :: LockArgs -> SplitData
 mkSplitData LockArgs{recipient1Wallet, recipient2Wallet, totalAda} =
@@ -101,32 +69,24 @@ mkSplitData LockArgs{recipient1Wallet, recipient2Wallet, totalAda} =
         , amount = totalAda
         }
 
--- BLOCK7
-
 lockFunds :: SplitData -> Contract SplitSchema T.Text ()
 lockFunds s@SplitData{amount} = do
     logInfo $ "Locking " <> show amount
     let tx = Constraints.mustPayToTheScript s (Ada.toValue amount)
     void $ submitTxConstraints splitInstance tx
 
--- BLOCK8
-
 unlockFunds :: SplitData -> Contract SplitSchema T.Text ()
 unlockFunds SplitData{recipient1, recipient2, amount} = do
     let contractAddress = (Ledger.scriptAddress (Scripts.validatorScript splitInstance))
     utxos <- utxoAt contractAddress
-    let half = Ada.divide amount 2
-        tx =
+    let tx =
             collectFromScript utxos ()
-            <> Constraints.mustPayToPubKey recipient1 (Ada.toValue half)
-            <> Constraints.mustPayToPubKey recipient2 (Ada.toValue $ amount - half)
+            <> Constraints.mustPayToPubKey recipient2 (Ada.toValue $ amount)
     void $ submitTxConstraintsSpending splitInstance utxos tx
 
--- BLOCK9
-
 endpoints :: Contract SplitSchema T.Text ()
--- BLOCK10
+endpoints = (lock >>= lockFunds . mkSplitData) 
 
-endpoints = (lock >>= lockFunds . mkSplitData) `select` (unlock >>= unlockFunds . mkSplitData)
+mkSchemaDefinitions ''SplitSchema
+$(mkKnownCurrencies [])
 
--- BLOCK11
