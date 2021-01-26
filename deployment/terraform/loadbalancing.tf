@@ -294,7 +294,7 @@ resource "aws_alb_target_group" "marlowe_dash" {
 resource "aws_alb_listener_rule" "marlowe_dash" {
   depends_on   = [aws_alb_target_group.marlowe_dash]
   listener_arn = aws_alb_listener.playground.arn
-  priority     = 113
+  priority     = 114
 
   action {
     type             = "forward"
