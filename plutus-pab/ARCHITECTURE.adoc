@@ -1,3 +1,0 @@
-=== Plutus Smart Contract Backend (SCB)
-
-* `Plutus.SCB.Events` Events that the SCB passes around.

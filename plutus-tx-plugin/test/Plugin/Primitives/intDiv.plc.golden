@@ -1,7 +1,0 @@
-(program
-  (lam
-    ds
-    (con integer)
-    (lam ds (con integer) [ [ (builtin divideInteger) ds ] ds ])
-  )
-)
