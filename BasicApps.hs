@@ -15,8 +15,7 @@ import           Wallet.Emulator.Wallet
 
 data SplitData =
     SplitData
-        { recipient1 :: PubKeyHash -- ^ First recipient of the funds
-        , recipient2 :: PubKeyHash -- ^ Second recipient of the funds
+        { recipient :: PubKeyHash -- ^ Second recipient of the funds
         , amount     :: Ada -- ^ How much Ada we want to lock
         }
     deriving stock (Show, Generic)
@@ -40,8 +39,7 @@ splitInstance = Scripts.validator @Split
 
 data LockArgs =
         LockArgs
-            { recipient1Wallet :: Wallet
-            , recipient2Wallet :: Wallet
+            { recipientWallet :: Wallet
             , totalAda         :: Ada
             }
     deriving stock (Show, Generic)
@@ -59,13 +57,12 @@ unlock :: Contract SplitSchema T.Text LockArgs
 unlock = endpoint @"unlock"
 
 mkSplitData :: LockArgs -> SplitData
-mkSplitData LockArgs{recipient1Wallet, recipient2Wallet, totalAda} =
+mkSplitData LockArgs{recipientWallet, totalAda} =
     let convert :: Wallet -> PubKeyHash
         convert = pubKeyHash . walletPubKey
     in
     SplitData
-        { recipient1 = convert recipient1Wallet
-        , recipient2 = convert recipient2Wallet
+        { recipient = convert recipientWallet
         , amount = totalAda
         }
 
@@ -76,16 +73,16 @@ lockFunds s@SplitData{amount} = do
     void $ submitTxConstraints splitInstance tx
 
 unlockFunds :: SplitData -> Contract SplitSchema T.Text ()
-unlockFunds SplitData{recipient1, recipient2, amount} = do
+unlockFunds SplitData{recipient, amount} = do
     let contractAddress = (Ledger.scriptAddress (Scripts.validatorScript splitInstance))
     utxos <- utxoAt contractAddress
     let tx =
             collectFromScript utxos ()
-            <> Constraints.mustPayToPubKey recipient2 (Ada.toValue $ amount)
+            <> Constraints.mustPayToPubKey recipient (Ada.toValue $ amount)
     void $ submitTxConstraintsSpending splitInstance utxos tx
 
 endpoints :: Contract SplitSchema T.Text ()
-endpoints = (lock >>= lockFunds . mkSplitData) 
+endpoints = (lock >>= lockFunds . mkSplitData) `select` (unlock >>= unlockFunds . mkSplitData)
 
 mkSchemaDefinitions ''SplitSchema
 $(mkKnownCurrencies [])
