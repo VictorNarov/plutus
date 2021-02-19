@@ -24,7 +24,8 @@ PlutusTx.makeIsData ''SplitData
 PlutusTx.makeLift ''SplitData
 
 validateSplit :: SplitData -> () -> ValidatorCtx -> Bool
-validateSplit _ _ _ = True
+validateSplit SplitData{recipient, amount} _ ValidatorCtx{valCtxTxInfo} =
+    Ada.fromValue (valuePaidTo valCtxTxInfo recipient) >= amount
 
 data Split
 instance Scripts.ScriptType Split where
@@ -86,4 +87,3 @@ endpoints = (lock >>= lockFunds . mkSplitData) `select` (unlock >>= unlockFunds 
 
 mkSchemaDefinitions ''SplitSchema
 $(mkKnownCurrencies [])
-
