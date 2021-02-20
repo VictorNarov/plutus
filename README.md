@@ -6,8 +6,8 @@
 :octocat: [Víctor M. Rodríguez (@VictorNarov)](https://github.com/VictorNarov)  
 
 ## Introducción
-En este repositorio se documentara la implementación de un Smart Contract implementado en lenguaje Haskell en la plataforma Plutus Playground. 
-En este, se visualiza como una cartera genera un contrato de transferencia de capital (Ada) y como la carpeta destinataria recoge ese capital. 
+En este repositorio se documentará la implementación de un Smart Contract codificado en lenguaje Haskell sobre plataforma Plutus Playground. 
+En este, se visualiza cómo una cartera genera un contrato de transferencia de capital (Ada) y cómo la carpeta destinataria recoge ese capital. 
 <p align="center">
   <img width="500" height="300" src="images/plutus.png">
 </p>  
@@ -32,7 +32,7 @@ import qualified Ledger.Typed.Scripts      as Scripts          -- Funciones del 
 import           Schema                                        -- Bilioteca Haskell para serializar y deserializar datos en JSON.
 import           Wallet.Emulator.Wallet                        -- Biblioteca Haskell para gestionar carteras virtuales.
 ```
-En este apatado importamos las librerías de CARDANO para la ejecución del Smart Contract. Su funcionalidad esta comentada a la derecha de su declaración.
+En este apatado importamos las librerías de CARDANO necesarias para la ejecución del Smart Contract. Su funcionalidad está comentada a la derecha de su declaración.
 
 ### Definición de tipo de datos
 ```
@@ -48,6 +48,15 @@ PlutusTx.makeLift ''SplitData
 ```
 Split data describe el destinatario al que se le va a enviar el capital y la cantidad de capital en Ada.
 Estamos utilizando el tipo PubKeyHash para identificar al destinatario. Al realizar el pago podemos utilizar el hash para crear la salida de clave pública.
+
+### Script de validación
+```
+validateSplit :: SplitData -> () -> ValidatorCtx -> Bool
+validateSplit SplitData{recipient, amount} _ ValidatorCtx{valCtxTxInfo} =
+    Ada.fromValue (valuePaidTo valCtxTxInfo recipient) >= amount
+```    
+Esta función es muy importante. Su misión es tomar ambas transacciones por separado y decidir si son válidas. Solo en ese caso se ejecuta y se cierra el contrato.
+En nuestro caso, este script comprueba que la cantidad que recibirá el destinatario es la acordada por ambas partes.
 
 ## Bibliografia
 - [Plutus Playground](https://playground.plutus.iohkdev.io/)
