@@ -36,27 +36,45 @@ En este apatado importamos las librerías de CARDANO necesarias para la ejecuci�
 
 ### Definición de tipo de datos
 ```
-data SplitData =
-    SplitData
-        { recipient :: PubKeyHash
+data SmartContractData =
+    SmartContractData
+        { recipient :: PubKeyHash 
         , amount     :: Ada
         }
     deriving stock (Show, Generic)
 
-PlutusTx.makeIsData ''SplitData
-PlutusTx.makeLift ''SplitData
+PlutusTx.makeIsData ''SmartContractData
+PlutusTx.makeLift ''SmartContractData
 ```
 Split data describe el destinatario al que se le va a enviar el capital y la cantidad de capital en Ada.
 Estamos utilizando el tipo PubKeyHash para identificar al destinatario. Al realizar el pago podemos utilizar el hash para crear la salida de clave pública.
 
 ### Script de validación
 ```
-validateSplit :: SplitData -> () -> ValidatorCtx -> Bool
-validateSplit SplitData{recipient, amount} _ ValidatorCtx{valCtxTxInfo} =
+validateSplit :: SmartContractData -> () -> ValidatorCtx -> Bool
+validateSplit SmartContractData{recipient, amount} _ ValidatorCtx{valCtxTxInfo} =
     Ada.fromValue (valuePaidTo valCtxTxInfo recipient) >= amount
 ```    
 Esta función es muy importante. Su misión es tomar ambas transacciones por separado y decidir si son válidas. Solo en ese caso se ejecuta y se cierra el contrato.
 En nuestro caso, este script comprueba que la cantidad que recibirá el destinatario es la acordada por ambas partes.
+
+### Recoger peticiones: endpoints
+```
+data LockArgs =
+        LockArgs
+            { recipientWallet :: Wallet -- Cartera del destinatario
+            , totalAda         :: Ada   -- Cantidad (Ada) a vincular al contrato
+            }
+    deriving stock (Show, Generic)
+    deriving anyclass (ToJSON, FromJSON, ToSchema)
+
+type SmartContractSchema =
+    BlockchainActions
+        .\/ Endpoint "lock" LockArgs
+        .\/ Endpoint "unlock" LockArgs
+```
+Para recoger las peticiones de los usuarios neceistamos declarar los "endpoints" correspondientes como parte del programa. El conjunto de todos los endpoints se denomina "schema". Lo construiremos usando el tipo Endpoint y el operador .\/ para combinarlos.
+Previamente hemos definido los parámetros necesarios para los endpoints, que son la dirección de la cartera destinataria y el cantidad de Ada a vincular con el contrato.
 
 ## Bibliografia
 - [Plutus Playground](https://playground.plutus.iohkdev.io/)
