@@ -136,7 +136,9 @@ $(mkKnownCurrencies [])
 Estas últimas lineas definen nuestra aplicación para que se pueda ejecutar en Plutus Playground. La función select ofrece dos ramificaciones para las carteras. Por un lado permite transferir el capital al contrato ejecutando la función ```lockFunds``` y por otra, recibir el capital del contrato con la función ```unlockFunds```. Asegura que una cartera solo pueda interactuar con una parte del contrato (enviar o recibir) y sea otra la que complemente el contrato.
 
 ### Simulación
-
+<p align="center">
+  <img width="1080" height="500" src="images/simulación.gif">
+</p> 
 
 ## Bibliografia
 - [Plutus Playground](https://playground.plutus.iohkdev.io/)
