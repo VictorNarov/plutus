@@ -1,7 +1,8 @@
 # Smart Contract con Plutus
 <p align="center">
   <img width="500" height="300" src="images/plutus.png">
-</p>
+</p>  
+
 :office: Universidad de Huelva (UHU)  
 :calendar: Curso 2020-2021  
 :mortar_board: Modelos Avanzados de Computación  
