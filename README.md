@@ -73,7 +73,7 @@ type SmartContractSchema =
         .\/ Endpoint "lock" LockArgs
         .\/ Endpoint "unlock" LockArgs
 ```
-Para recoger las peticiones de los usuarios neceistamos declarar los "endpoints" correspondientes como parte del programa. El conjunto de todos los endpoints se denomina "schema". Lo construiremos usando el tipo Endpoint y el operador ```.\/'``` para combinarlos.
+Para recoger las peticiones de los usuarios neceistamos declarar los "endpoints" correspondientes como parte del programa. El conjunto de todos los endpoints se denomina "schema". Lo construiremos usando el tipo Endpoint y el operador ```.\/``` para combinarlos.
 Previamente hemos definido los parámetros necesarios para los endpoints, que son la dirección de la cartera destinataria y el cantidad de Ada a vincular con el contrato.
 
 ## Bibliografia
