@@ -137,8 +137,10 @@ Estas últimas lineas definen nuestra aplicación para que se pueda ejecutar en 
 
 ### Simulación
 <p align="center">
-  <img width="1280" height="720" src="images/simulación.gif">
+  <img width="800" height="396" src="images/simulación.gif">
 </p> 
+En esta simulación se puede visualizar la compilación de este Smart Contract en Plutus Playground y una ejecución en la que la cartera 1 envia 5 Ada a la cartera 2.
+
 
 ## Bibliografia
 - [Plutus Playground](https://playground.plutus.iohkdev.io/)
