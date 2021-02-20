@@ -25,7 +25,7 @@ PlutusTx.makeLift ''SmartContractData
 
 validateSmartContract :: SmartContractData -> () -> ValidatorCtx -> Bool
 validateSmartContract SmartContractData{recipient, amount} _ ValidatorCtx{valCtxTxInfo} =
-    Ada.fromValue (valuePaidTo valCtxTxInfo recipient) >= amount
+    Ada.fromValue (valuePaidTo valCtxTxInfo recipient) == amount
 
 data SmartContract
 instance Scripts.ScriptType SmartContract where
