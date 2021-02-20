@@ -13,30 +13,30 @@ import qualified Ledger.Typed.Scripts      as Scripts
 import           Schema
 import           Wallet.Emulator.Wallet
 
-data SplitData =
-    SplitData
-        { recipient :: PubKeyHash -- ^ Second recipient of the funds
-        , amount     :: Ada -- ^ How much Ada we want to lock
+data SmartContractData =
+    SmartContractData
+        { recipient :: PubKeyHash -- Destinatario de los fondos
+        , amount     :: Ada -- ^ Cantidad de Ada (moneda)
         }
     deriving stock (Show, Generic)
 
-PlutusTx.makeIsData ''SplitData
-PlutusTx.makeLift ''SplitData
+PlutusTx.makeIsData ''SmartContractData
+PlutusTx.makeLift ''SmartContractData
 
-validateSplit :: SplitData -> () -> ValidatorCtx -> Bool
-validateSplit SplitData{recipient, amount} _ ValidatorCtx{valCtxTxInfo} =
+validateSmartContract :: SmartContractData -> () -> ValidatorCtx -> Bool
+validateSmartContract SmartContractData{recipient, amount} _ ValidatorCtx{valCtxTxInfo} =
     Ada.fromValue (valuePaidTo valCtxTxInfo recipient) >= amount
 
-data Split
-instance Scripts.ScriptType Split where
-    type instance RedeemerType Split = ()
-    type instance DatumType Split = SplitData
+data SmartContract
+instance Scripts.ScriptType SmartContract where
+    type instance RedeemerType SmartContract = ()
+    type instance DatumType SmartContract = SmartContractData
 
-splitInstance :: Scripts.ScriptInstance Split
-splitInstance = Scripts.validator @Split
-    $$(PlutusTx.compile [|| validateSplit ||])
+smartContractInstance :: Scripts.ScriptInstance SmartContract
+smartContractInstance = Scripts.validator @SmartContract
+    $$(PlutusTx.compile [|| validateSmartContract ||])
     $$(PlutusTx.compile [|| wrap ||]) where
-        wrap = Scripts.wrapValidator @SplitData @()
+        wrap = Scripts.wrapValidator @SmartContractData @()
 
 data LockArgs =
         LockArgs
@@ -46,44 +46,44 @@ data LockArgs =
     deriving stock (Show, Generic)
     deriving anyclass (ToJSON, FromJSON, ToSchema)
 
-type SplitSchema =
+type SmartContractSchema =
     BlockchainActions
         .\/ Endpoint "lock" LockArgs
         .\/ Endpoint "unlock" LockArgs
 
-lock :: Contract SplitSchema T.Text LockArgs
+lock :: Contract SmartContractSchema T.Text LockArgs
 lock = endpoint @"lock"
 
-unlock :: Contract SplitSchema T.Text LockArgs
+unlock :: Contract SmartContractSchema T.Text LockArgs
 unlock = endpoint @"unlock"
 
-mkSplitData :: LockArgs -> SplitData
-mkSplitData LockArgs{recipientWallet, totalAda} =
+mkSmartContractData :: LockArgs -> SmartContractData
+mkSmartContractData LockArgs{recipientWallet, totalAda} =
     let convert :: Wallet -> PubKeyHash
         convert = pubKeyHash . walletPubKey
     in
-    SplitData
+    SmartContractData
         { recipient = convert recipientWallet
         , amount = totalAda
         }
 
-lockFunds :: SplitData -> Contract SplitSchema T.Text ()
-lockFunds s@SplitData{amount} = do
+lockFunds :: SmartContractData -> Contract SmartContractSchema T.Text ()
+lockFunds s@SmartContractData{amount} = do
     logInfo $ "Locking " <> show amount
     let tx = Constraints.mustPayToTheScript s (Ada.toValue amount)
-    void $ submitTxConstraints splitInstance tx
+    void $ submitTxConstraints smartContractInstance tx
 
-unlockFunds :: SplitData -> Contract SplitSchema T.Text ()
-unlockFunds SplitData{recipient, amount} = do
-    let contractAddress = (Ledger.scriptAddress (Scripts.validatorScript splitInstance))
+unlockFunds :: SmartContractData -> Contract SmartContractSchema T.Text ()
+unlockFunds SmartContractData{recipient, amount} = do
+    let contractAddress = (Ledger.scriptAddress (Scripts.validatorScript smartContractInstance))
     utxos <- utxoAt contractAddress
     let tx =
             collectFromScript utxos ()
             <> Constraints.mustPayToPubKey recipient (Ada.toValue $ amount)
-    void $ submitTxConstraintsSpending splitInstance utxos tx
+    void $ submitTxConstraintsSpending smartContractInstance utxos tx
 
-endpoints :: Contract SplitSchema T.Text ()
-endpoints = (lock >>= lockFunds . mkSplitData) `select` (unlock >>= unlockFunds . mkSplitData)
+endpoints :: Contract SmartContractSchema T.Text ()
+endpoints = (lock >>= lockFunds . mkSmartContractData) `select` (unlock >>= unlockFunds . mkSmartContractData)
 
-mkSchemaDefinitions ''SplitSchema
+mkSchemaDefinitions ''SmartContractSchema
 $(mkKnownCurrencies [])
