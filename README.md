@@ -137,7 +137,7 @@ Estas últimas lineas definen nuestra aplicación para que se pueda ejecutar en 
 
 ### Simulación
 <p align="center">
-  <img width="1200" height="594" src="images/simulación.gif">
+  <img width="1280" height="720" src="images/simulación.gif">
 </p> 
 
 ## Bibliografia
