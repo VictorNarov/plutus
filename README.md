@@ -1,8 +1,4 @@
 # Smart Contract con Plutus
-<p align="center">
-  <img width="500" height="300" src="images/plutus.png">
-</p>  
-
 :office: Universidad de Huelva (UHU)  
 :calendar: Curso 2020-2021  
 :mortar_board: Modelos Avanzados de Computación  
@@ -12,6 +8,9 @@
 ## Introducción
 En este repositorio se documentara la implementación de un Smart Contract implementado en lenguaje Haskell en la plataforma Plutus Playground. 
 En este, se visualiza como una cartera genera un contrato de transferencia de capital (Ada) y como la carpeta destinataria recoge ese capital. 
+<p align="center">
+  <img width="500" height="300" src="images/plutus.png">
+</p>  
 
 ## Partes del Smart Contract
 En este apartado veremos las diferentes partes de este Smart Contract.
